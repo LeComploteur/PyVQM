@@ -88,7 +88,7 @@ class MainWindowList(QtWidgets.QMainWindow, Ui_MainWindow):
             self,
             "Open File",
             "",
-            "Text Files (*.mp4;*.mkv;*.avi;*.ogv,*.mov);;All Files (*)",
+            "Video Files (*.mp4 *.mkv *.avi *.ogv *.mov);;All Files *",
             options=options,
         )
         if file_name:
@@ -110,7 +110,7 @@ class MainWindowList(QtWidgets.QMainWindow, Ui_MainWindow):
             self,
             "Open File",
             "",
-            "Text Files (*.mp4;*.mkv;*.avi;*.ogv,*.mov);;All Files (*)",
+            "Video Files (*.mp4 *.mkv *.avi *.ogv *.mov);;All Files *",
             options=options,
         )
         if file_name:
@@ -151,7 +151,13 @@ class MainWindowList(QtWidgets.QMainWindow, Ui_MainWindow):
             self.model.layoutChanged.emit()
             # Clear the selection (as it is no longer valid).
             self.distordedView.clearSelection()
+            self.plotWindow.reset_all(index.row())
             self.plotWindow.remove_plot(index.row())
+            self.ssim_values.clear()
+            self.psnr_values.clear()
+            self.SSIM_frames.clear()
+            self.psnr_frames.clear()
+            
 
     def show_new_window(self, checked):
         """
@@ -249,11 +255,18 @@ class MainWindowList(QtWidgets.QMainWindow, Ui_MainWindow):
         p_finished_handler,
         frames_data: list,
         fps_data: list,
+        metric_to_update: str ,
         args: list = [],
         index: int = 0,
+        
     ):
         frames_data.clear()
+        # Clear the list before starting a new process
+        getattr(self.model.distordedList[index], metric_to_update).clear()
+        getattr(self.model.distordedList[index], "frames").clear()
+
         fps_data.clear()
+
         # Before we plot, make sure to reset the plot
         plot_to_reset(index)
         # Reset the values stored in the lists
@@ -302,6 +315,7 @@ class MainWindowList(QtWidgets.QMainWindow, Ui_MainWindow):
             self.SSIM_finished,
             self.model.distordedList[index].frames,
             self.model.distordedList[index].ssim_values,
+            "ssim_values",
             args,
             index,
         )
@@ -331,6 +345,7 @@ class MainWindowList(QtWidgets.QMainWindow, Ui_MainWindow):
             self.PSNR_finished,
             self.psnr_frames,
             self.psnr_values,
+            "psnr_values",
             args,
             index,
         )
@@ -401,6 +416,9 @@ class MainWindowList(QtWidgets.QMainWindow, Ui_MainWindow):
                     plot_to_update(
                         frames_data, fps_data, index
                     )  # Mettre à jour le graphique
+                else:
+                    log.error(f"Failed to parse line: {line.strip()}")
+                    # self.message(f"Failed to parse line: {line.strip()}")
 
     def handle_stdout_SSIM(self, index):
         self.handle_stdout(

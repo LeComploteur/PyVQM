@@ -11,6 +11,9 @@ from PySide6.QtWidgets import (
 )
 
 import pyqtgraph as pg
+import logging
+
+log = logging.getLogger("rich")
 
 
 class PlotWindow(QMainWindow):
@@ -64,7 +67,6 @@ class PlotWindow(QMainWindow):
             pg.mkPen(color=(0, 0, 255)),
         ]
 
-
     def reset_all(self, index):
         self.data_linesSSIM[index].clear()
         self.data_linesPSNR[index].clear()
@@ -73,20 +75,35 @@ class PlotWindow(QMainWindow):
     def add_plot(self, name: str):
         len_data_lines = len(self.data_linesSSIM)
         self.data_linesSSIM.append(
-            self.graphWidgetSSIM.plot(self.x, self.y, pen=self.pens[len_data_lines], name=name))
+            self.graphWidgetSSIM.plot(
+                self.x, self.y, pen=self.pens[len_data_lines], name=name
+            )
+        )
         self.data_linesPSNR.append(
-            self.graphWidgetPSNR.plot(self.x, self.y, pen=self.pens[len_data_lines], name=name))
+            self.graphWidgetPSNR.plot(
+                self.x, self.y, pen=self.pens[len_data_lines], name=name
+            )
+        )
         self.data_linesVMAF.append(
-            self.graphWidgetVMAF.plot(self.x, self.y, pen=self.pens[len_data_lines], name=name))
-        
+            self.graphWidgetVMAF.plot(
+                self.x, self.y, pen=self.pens[len_data_lines], name=name
+            )
+        )
+
     def remove_plot(self, index):
         if index < len(self.data_linesSSIM):
+            self.data_linesSSIM[index].setData([], [])
+            self.data_linesPSNR[index].setData([], [])
+            self.data_linesVMAF[index].setData([], [])
             self.graphWidgetSSIM.removeItem(self.data_linesSSIM[index])
             self.graphWidgetPSNR.removeItem(self.data_linesPSNR[index])
             self.graphWidgetVMAF.removeItem(self.data_linesVMAF[index])
             del self.data_linesSSIM[index]
             del self.data_linesPSNR[index]
             del self.data_linesVMAF[index]
+            log.info(f"Removed plot at index {index}")
+            log.info(self.data_linesSSIM)
+            log.info(len(self.data_linesSSIM))
 
     def reset_ssim(self, index):
         self.data_linesSSIM[index].clear()
